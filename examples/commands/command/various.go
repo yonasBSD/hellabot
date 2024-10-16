@@ -53,8 +53,6 @@ var sayInfoMessage = hbot.Trigger{
 
 // Run a Lua script
 func (core Core) RunLua(m *hbot.Message, args []string) {
-	core.Bot.Reply(m, fmt.Sprintf("args: %v", args))
-
 	// Define your machine with global variables and modules
 	globals := starlet.StringAnyMap{
 		"greet": func(name string) string {
@@ -102,18 +100,14 @@ func (core Core) RunLua(m *hbot.Message, args []string) {
 
 // Run a script
 func (core Core) RunScript(m *hbot.Message, args []string) {
-	core.Bot.Reply(m, fmt.Sprintf("args: %v", args))
-
 	var a = []string{}
 
 	if len(args) > 1 {
 		a = args[1:]
 	}
 
-	core.Bot.Reply(m, fmt.Sprintf("a: %v", a))
-
 	output, err := run_script(args[0], a)
-	core.Bot.Reply(m, fmt.Sprintf("%s", output))
+	core.Bot.Reply(m, output)
 
 	if err != nil {
 		core.Bot.Reply(m, fmt.Sprintf("Exited with errors: %s", err))

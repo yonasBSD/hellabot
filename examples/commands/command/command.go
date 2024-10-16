@@ -83,18 +83,13 @@ func (cl *List) Process(bot *hbot.Bot, m *hbot.Message) {
 				"full text", m.Content)
 
 			if cl.Commands[commandstring].Script != "" {
-				bot.Msg(m.From, fmt.Sprintf("append %v", cl.Commands[commandstring].Script))
 
 				_, right, _ := strings.Cut(m.Content, " ")
-
-				bot.Msg(m.From, fmt.Sprintf("right %s", right))
 
 				parts = strings.Split(right, " ")
 				parts = slices.Insert(parts, 0, cl.Commands[commandstring].Script)
 				parts = slices.Insert(parts, 0, cl.Commands[commandstring].Script)
 			}
-
-			bot.Msg(m.From, fmt.Sprintf("parts %v", parts))
 
 			if len(parts) > 1 {
 				cmd.Run(m, parts[1:])
