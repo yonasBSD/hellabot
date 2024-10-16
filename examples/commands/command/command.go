@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/whyrusleeping/hellabot/examples/commands/config"
@@ -22,6 +23,7 @@ type Command struct {
 	Description string
 	Usage       string
 	Run         Func
+	Script      string
 }
 
 // Func represents the Go function that will be executed when a command triggers
@@ -79,6 +81,21 @@ func (cl *List) Process(bot *hbot.Bot, m *hbot.Message) {
 		go func(m *hbot.Message) {
 			bot.Logger.Debug("action", "executing",
 				"full text", m.Content)
+
+			if cl.Commands[commandstring].Script != "" {
+				bot.Msg(m.From, fmt.Sprintf("append %v", cl.Commands[commandstring].Script))
+
+				_, right, _ := strings.Cut(m.Content, " ")
+
+				bot.Msg(m.From, fmt.Sprintf("right %s", right))
+
+				parts = strings.Split(right, " ")
+				parts = slices.Insert(parts, 0, cl.Commands[commandstring].Script)
+				parts = slices.Insert(parts, 0, cl.Commands[commandstring].Script)
+			}
+
+			bot.Msg(m.From, fmt.Sprintf("parts %v", parts))
+
 			if len(parts) > 1 {
 				cmd.Run(m, parts[1:])
 			} else {

@@ -1,4 +1,20 @@
-server = "irc.theairlock.net:7778"
+server = "localhost:6667"
 nick = "hellabot"
-ssl = true
+ssl = false
 channels = ["#test", "#test2:somepassword"]
+
+[[commands]]
+name = "Fun-1"
+description = "Fun 1"
+script = "/tmp/fun.sh"
+
+[[commands]]
+name = "Fun-2"
+description = "Fun 2"
+script = """
+fun = arg(2)
+encoded = base64.encode("hello world!")
+url = http.get("https://example.com").body()
+print(encoded)
+"""
+type = "lua"

@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"strings"
 
 	hbot "github.com/whyrusleeping/hellabot"
 	"github.com/whyrusleeping/hellabot/examples/commands/command"
@@ -66,6 +68,43 @@ func main() {
 		Usage:       "!cve CVE-2017-7494",                                                 // Usage example
 		Run:         core.GetCVE,                                                          // Function or method to run when it triggers
 	})
+
+	for _, c := range conf.Commands {
+		log.Println(fmt.Sprintf("command type: --%s--", c.Type))
+
+		switch strings.ToLower(c.Type) {
+		case "lua", "starlark":
+			log.Println("add lua")
+			cmdList.AddCommand(command.Command{
+				Name:        c.Name,
+				Description: c.Description,
+				Usage:       c.Usage,
+				Run:         core.RunLua,
+				Script:      c.Script,
+			})
+			break
+
+		//case javascript typescript
+		case "shell", "bash", "sh":
+			cmdList.AddCommand(command.Command{
+				Name:        c.Name,
+				Description: c.Description,
+				Usage:       c.Usage,
+				Run:         core.RunScript,
+				Script:      c.Script,
+			})
+			break
+
+		default:
+			cmdList.AddCommand(command.Command{
+				Name:        c.Name,
+				Description: c.Description,
+				Usage:       c.Usage,
+				Run:         core.RunScript,
+				Script:      c.Script,
+			})
+		}
+	}
 
 	// Start up bot (blocks until disconnect)
 	bot.Run()

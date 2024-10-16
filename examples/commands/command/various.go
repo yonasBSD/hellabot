@@ -3,13 +3,130 @@ package command
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/1set/starlet"
 	hbot "github.com/whyrusleeping/hellabot"
 )
+
+// This trigger will op people in the given list who ask by saying "-opme"
+var oplist = []string{"whyrusleeping", "tlane", "ltorvalds"}
+var opPeople = hbot.Trigger{
+	Condition: func(bot *hbot.Bot, m *hbot.Message) bool {
+		if m.Content == "-opme" {
+			for _, s := range oplist {
+				if m.From == s {
+					return true
+				}
+			}
+		}
+		return false
+	},
+	Action: func(irc *hbot.Bot, m *hbot.Message) bool {
+		irc.ChMode(m.To, m.From, "+o")
+		return false
+	},
+}
+
+// This trigger will say the contents of the file "info" when prompted
+var sayInfoMessage = hbot.Trigger{
+	Condition: func(bot *hbot.Bot, m *hbot.Message) bool {
+		return m.Command == "PRIVMSG" && m.Content == "-info"
+	},
+	Action: func(irc *hbot.Bot, m *hbot.Message) bool {
+		fi, err := os.Open("info")
+		if err != nil {
+			return false
+		}
+		info, _ := ioutil.ReadAll(fi)
+
+		irc.Send("PRIVMSG " + m.From + " : " + string(info))
+		return false
+	},
+}
+
+// Run a Lua script
+func (core Core) RunLua(m *hbot.Message, args []string) {
+	core.Bot.Reply(m, fmt.Sprintf("args: %v", args))
+
+	// Define your machine with global variables and modules
+	globals := starlet.StringAnyMap{
+		"greet": func(name string) string {
+			return fmt.Sprintf("Hello, %s!", name)
+		},
+		"allArgs": func() string {
+			return strings.Join(args, " ")
+		},
+		"arg": func(index int) string {
+			return args[index]
+		},
+	}
+	/*
+		atom 	godoc 	Atomic operations for integers, floats, and strings
+		base64 	godoc 	Base64 encoding & decoding functions
+		csv 	godoc 	Parses and writes comma-separated values (csv) contents
+		file 	godoc 	Functions to interact with the file system
+		goidiomatic 	godoc 	Go idiomatic functions and values for Starlark
+		hashlib 	godoc 	Hash primitives for Starlark
+		http 	godoc 	HTTP client and server handler implementation for Starlark
+		json 	godoc 	Utilities for converting Starlark values to/from JSON strings
+		log 	godoc 	Functionality for logging messages at various severity levels
+		path 	godoc 	Functions to manipulate directories and file paths
+		random 	godoc 	Functions to generate random values for various distributions
+		re 	godoc 	Regular expression functions for Starlark
+		runtime 	godoc 	Provides Go and app runtime information
+		string 	godoc 	Constants and functions to manipulate strings
+	*/
+
+	mac := starlet.NewWithNames(globals, []string{"random", "atom", "base64", "csv", "file", "hashlib", "http", "json", "log", "path", "random", "re", "runtime", "string"}, nil)
+
+	// Run a Starlark script in the machine
+	script := args[0]
+
+	res, err := mac.RunScript([]byte(script), nil)
+
+	// Check for errors and results
+	if err != nil {
+		core.Bot.Reply(m, fmt.Sprintf("Exited with errors: %s", err))
+		return
+	}
+
+	core.Bot.Reply(m, fmt.Sprintf("%v", res))
+}
+
+// Run a script
+func (core Core) RunScript(m *hbot.Message, args []string) {
+	core.Bot.Reply(m, fmt.Sprintf("args: %v", args))
+
+	var a = []string{}
+
+	if len(args) > 1 {
+		a = args[1:]
+	}
+
+	core.Bot.Reply(m, fmt.Sprintf("a: %v", a))
+
+	output, err := run_script(args[0], a)
+	core.Bot.Reply(m, fmt.Sprintf("%s", output))
+
+	if err != nil {
+		core.Bot.Reply(m, fmt.Sprintf("Exited with errors: %s", err))
+		return
+	}
+}
+
+func run_script(script string, args []string) (string, error) {
+	cmd := exec.Command(script, args...)
+	stdout, err := cmd.Output()
+
+	return string(stdout), err
+}
 
 // Kudos sends a kudos to the target nick
 func (core Core) Kudos(m *hbot.Message, args []string) {

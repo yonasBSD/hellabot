@@ -22,6 +22,14 @@ func FromFile(configFile string) Config {
 	return config
 }
 
+type Command struct {
+	Name        string
+	Description string
+	Usage       string
+	Script      string
+	Type        string
+}
+
 // Config holds the bot's configuration
 type Config struct {
 	Server         string
@@ -29,6 +37,7 @@ type Config struct {
 	ServerPassword string
 	Channels       []string
 	SSL            bool
+	Commands       []Command
 }
 
 // ValidateConfig checks that the config object has all the values it should, and fatally fails if not.

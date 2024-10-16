@@ -1,4 +1,4 @@
-// +build !linux,!freebsd,!openbsd,!dragonfly,!netbsd,!darwin
+//go:build !linux && !freebsd && !openbsd && !dragonfly && !netbsd && !darwin
 
 package hbot
 
